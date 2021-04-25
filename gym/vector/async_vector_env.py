@@ -8,7 +8,7 @@ from copy import deepcopy
 from gym import logger
 from gym.vector.vector_env import VectorEnv
 from gym.error import (AlreadyPendingCallError, NoAsyncCallError,
-                       ClosedEnvironmentError, CustomSpaceError)
+                       ClosedEnvironmentError)
 from gym.vector.utils import (create_shared_memory, create_empty_array,
                               write_to_shared_memory, read_from_shared_memory,
                               concatenate, CloudpickleWrapper, clear_mpi_env_vars)
@@ -68,7 +68,12 @@ class AsyncVectorEnv(VectorEnv):
     """
     def __init__(self, env_fns, observation_space=None, action_space=None,
                  shared_memory=True, copy=True, context=None, daemon=True, worker=None):
-        ctx = mp.get_context(context)
+        try:
+            ctx = mp.get_context(context)
+        except AttributeError:
+            logger.warn('Context switching for `multiprocessing` is not '
+                'available in Python 2. Using the default context.')
+            ctx = mp
         self.env_fns = env_fns
         self.shared_memory = shared_memory
         self.copy = copy
@@ -83,18 +88,10 @@ class AsyncVectorEnv(VectorEnv):
             observation_space=observation_space, action_space=action_space)
 
         if self.shared_memory:
-            try:
-                _obs_buffer = create_shared_memory(self.single_observation_space,
-                    n=self.num_envs, ctx=ctx)
-                self.observations = read_from_shared_memory(_obs_buffer,
-                    self.single_observation_space, n=self.num_envs)
-            except CustomSpaceError:
-                raise ValueError('Using `shared_memory=True` in `AsyncVectorEnv` '
-                    'is incompatible with non-standard Gym observation spaces '
-                    '(i.e. custom spaces inheriting from `gym.Space`), and is '
-                    'only compatible with default Gym spaces (e.g. `Box`, '
-                    '`Tuple`, `Dict`) for batching. Set `shared_memory=False` '
-                    'if you use custom observation spaces.')
+            _obs_buffer = create_shared_memory(self.single_observation_space,
+                n=self.num_envs, ctx=ctx)
+            self.observations = read_from_shared_memory(_obs_buffer,
+                self.single_observation_space, n=self.num_envs)
         else:
             _obs_buffer = None
             self.observations = create_empty_array(
@@ -179,8 +176,7 @@ class AsyncVectorEnv(VectorEnv):
         self._state = AsyncState.DEFAULT
 
         if not self.shared_memory:
-            self.observations = concatenate(results, self.observations,
-                self.single_observation_space)
+            concatenate(results, self.observations, self.single_observation_space)
 
         return deepcopy(self.observations) if self.copy else self.observations
 
@@ -221,7 +217,7 @@ class AsyncVectorEnv(VectorEnv):
             A vector whose entries indicate whether the episode has ended.
 
         infos : list of dict
-            A list of auxiliary diagnostic information.
+            A list of auxiliary diagnostic informations.
         """
         self._assert_is_running()
         if self._state != AsyncState.WAITING_STEP:
@@ -239,7 +235,7 @@ class AsyncVectorEnv(VectorEnv):
         observations_list, rewards, dones, infos = zip(*results)
 
         if not self.shared_memory:
-            self.observations = concatenate(observations_list, self.observations,
+            concatenate(observations_list, self.observations,
                 self.single_observation_space)
 
         return (deepcopy(self.observations) if self.copy else self.observations,

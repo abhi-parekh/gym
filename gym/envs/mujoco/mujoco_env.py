@@ -23,8 +23,8 @@ def convert_observation_to_space(observation):
             for key, value in observation.items()
         ]))
     elif isinstance(observation, np.ndarray):
-        low = np.full(observation.shape, -float('inf'), dtype=np.float32)
-        high = np.full(observation.shape, float('inf'), dtype=np.float32)
+        low = np.full(observation.shape, -float('inf'))
+        high = np.full(observation.shape, float('inf'))
         space = spaces.Box(low, high, dtype=observation.dtype)
     else:
         raise NotImplementedError(type(observation), observation)
@@ -69,7 +69,7 @@ class MujocoEnv(gym.Env):
         self.seed()
 
     def _set_action_space(self):
-        bounds = self.model.actuator_ctrlrange.copy().astype(np.float32)
+        bounds = self.model.actuator_ctrlrange.copy()
         low, high = bounds.T
         self.action_space = spaces.Box(low=low, high=high, dtype=np.float32)
         return self.action_space
@@ -130,7 +130,7 @@ class MujocoEnv(gym.Env):
                height=DEFAULT_SIZE,
                camera_id=None,
                camera_name=None):
-        if mode == 'rgb_array' or mode == 'depth_array':
+        if mode == 'rgb_array':
             if camera_id is not None and camera_name is not None:
                 raise ValueError("Both `camera_id` and `camera_name` cannot be"
                                  " specified at the same time.")
@@ -143,8 +143,6 @@ class MujocoEnv(gym.Env):
                 camera_id = self.model.camera_name2id(camera_name)
 
             self._get_viewer(mode).render(width, height, camera_id=camera_id)
-
-        if mode == 'rgb_array':
             # window size used for old mujoco-py:
             data = self._get_viewer(mode).read_pixels(width, height, depth=False)
             # original image is upside-down, so flip it

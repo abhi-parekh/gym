@@ -109,14 +109,14 @@ register(
 )
 
 register(
-    id='BipedalWalker-v3',
+    id='BipedalWalker-v2',
     entry_point='gym.envs.box2d:BipedalWalker',
     max_episode_steps=1600,
     reward_threshold=300,
 )
 
 register(
-    id='BipedalWalkerHardcore-v3',
+    id='BipedalWalkerHardcore-v2',
     entry_point='gym.envs.box2d:BipedalWalkerHardcore',
     max_episode_steps=2000,
     reward_threshold=300,
@@ -152,7 +152,7 @@ register(
     entry_point='gym.envs.toy_text:FrozenLakeEnv',
     kwargs={'map_name' : '4x4'},
     max_episode_steps=100,
-    reward_threshold=0.70, # optimum = 0.74
+    reward_threshold=0.78, # optimum = .8196
 )
 
 register(
@@ -160,7 +160,7 @@ register(
     entry_point='gym.envs.toy_text:FrozenLakeEnv',
     kwargs={'map_name' : '8x8'},
     max_episode_steps=200,
-    reward_threshold=0.85, # optimum = 0.91
+    reward_threshold=0.99, # optimum = 1
 )
 
 register(

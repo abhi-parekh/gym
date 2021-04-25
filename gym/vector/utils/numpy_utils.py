@@ -1,6 +1,6 @@
 import numpy as np
 
-from gym.spaces import Space, Tuple, Dict
+from gym.spaces import Tuple, Dict
 from gym.vector.utils.spaces import _BaseGymSpaces
 from collections import OrderedDict
 
@@ -42,11 +42,8 @@ def concatenate(items, out, space):
         return concatenate_tuple(items, out, space)
     elif isinstance(space, Dict):
         return concatenate_dict(items, out, space)
-    elif isinstance(space, Space):
-        return concatenate_custom(items, out, space)
     else:
-        raise ValueError('Space of type `{0}` is not a valid `gym.Space` '
-                         'instance.'.format(type(space)))
+        raise NotImplementedError()
 
 def concatenate_base(items, out, space):
     return np.stack(items, axis=0, out=out)
@@ -58,9 +55,6 @@ def concatenate_tuple(items, out, space):
 def concatenate_dict(items, out, space):
     return OrderedDict([(key, concatenate([item[key] for item in items],
         out[key], subspace)) for (key, subspace) in space.spaces.items()])
-
-def concatenate_custom(items, out, space):
-    return tuple(items)
 
 
 def create_empty_array(space, n=1, fn=np.zeros):
@@ -102,11 +96,8 @@ def create_empty_array(space, n=1, fn=np.zeros):
         return create_empty_array_tuple(space, n=n, fn=fn)
     elif isinstance(space, Dict):
         return create_empty_array_dict(space, n=n, fn=fn)
-    elif isinstance(space, Space):
-        return create_empty_array_custom(space, n=n, fn=fn)
     else:
-        raise ValueError('Space of type `{0}` is not a valid `gym.Space` '
-                         'instance.'.format(type(space)))
+        raise NotImplementedError()
 
 def create_empty_array_base(space, n=1, fn=np.zeros):
     shape = space.shape if (n is None) else (n,) + space.shape
@@ -119,6 +110,3 @@ def create_empty_array_tuple(space, n=1, fn=np.zeros):
 def create_empty_array_dict(space, n=1, fn=np.zeros):
     return OrderedDict([(key, create_empty_array(subspace, n=n, fn=fn))
         for (key, subspace) in space.spaces.items()])
-
-def create_empty_array_custom(space, n=1, fn=np.zeros):
-    return None
